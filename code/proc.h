@@ -50,7 +50,7 @@ struct proc {
   struct inode *cwd;           // Current directory
   char name[16];               // Process name (debugging)
   // NEW
-  int prio;					   // Priority setting
+  int prio;					           // Priority setting
 };
 
 // Process memory is laid out contiguously, low addresses first:
@@ -59,6 +59,6 @@ struct proc {
 //   fixed-size stack
 //   expandable heap
 
-// NEw
+// NEW
 int GET_prio(void);
 int SET_prio(int);

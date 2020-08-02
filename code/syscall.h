@@ -23,3 +23,4 @@
 // NEW
 #define SYS_getprio 22
 #define SYS_setprio 23
+#define SYS_yield   24

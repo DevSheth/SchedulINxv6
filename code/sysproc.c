@@ -98,7 +98,17 @@ sys_getprio(void)
 }
 
 int 
-sys_setprio(int pro)
+sys_setprio(void)
 {
-  return SET_prio(pro);
+  int n;
+  if(argint(0, &n) < 0)
+    return -1;
+  return SET_prio(n);
+}
+
+int 
+sys_yield(void)
+{
+  yield();
+  return 0;
 }

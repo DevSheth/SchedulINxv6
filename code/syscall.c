@@ -106,6 +106,7 @@ extern int sys_uptime(void);
 // NEW
 extern int sys_getprio(void);
 extern int sys_setprio(void);
+extern int sys_yield(void);
 
 static int (*syscalls[])(void) = {
 [SYS_fork]    sys_fork,
@@ -132,6 +133,7 @@ static int (*syscalls[])(void) = {
 // NEW
 [SYS_getprio] sys_getprio,
 [SYS_setprio] sys_setprio,
+[SYS_yield]   sys_yield,
 };
 
 void

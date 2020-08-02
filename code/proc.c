@@ -10,7 +10,7 @@
 // NEw
 #define MAX_PRIORITY 0
 #define MIN_PRIORITY 10
-int random = 0;
+int random = 1;
 
 struct {
   struct spinlock lock;
@@ -94,8 +94,8 @@ found:
   p->state = EMBRYO;
   p->pid = nextpid++;
   // NEW
-  if(random % 2 == 0) p->prio = MAX_PRIORITY;
-  else p->prio = MIN_PRIORITY;
+  if(random % 2 == 0) p->prio = MAX_PRIORITY + 5;
+  else p->prio = MIN_PRIORITY - 5;
   random++; 
 
   release(&ptable.lock);
@@ -207,6 +207,7 @@ fork(void)
   }
   np->sz = curproc->sz;
   np->parent = curproc;
+  np->prio = curproc->prio;
   *np->tf = *curproc->tf;
 
   // Clear %eax so that fork returns 0 in the child.
@@ -334,6 +335,7 @@ scheduler(void)
   struct proc *p;
   struct cpu *c = mycpu();
   c->proc = 0;
+  uint myticksinit, myticksfinal;
   
   for(;;){
     // Enable interrupts on this processor.
@@ -343,34 +345,52 @@ scheduler(void)
     acquire(&ptable.lock);
     // NEW
     int min = 11;
-    struct proc *my_p, *pp;
+    struct proc *my_p;
+    // NEW
     for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
       // OLD
       // if(p->state != RUNNABLE)
       //   continue;
-      // NEW
-      min = 11;
-      for(pp = ptable.proc; pp < &ptable.proc[NPROC]; pp++){
-        if(pp->state == RUNNABLE){
-          if(pp->prio < min){
-            min = pp->prio;
-            my_p = pp;
-          }
+      if(p->state == RUNNABLE){
+        if(p->prio < min){
+          min = p->prio;
+          my_p = p;
         }
-        else continue;
       }
-      if(min == 11) continue;
-      else p = my_p;
-
+    }
+    if(min != 11){ 
+      p = my_p;
       // Switch to chosen process.  It is the process's job
       // to release ptable.lock and then reacquire it
       // before jumping back to us.
+      
+      // NEW
+      // acquire(&tickslock);
+      myticksinit = ticks;
+      // release(&tickslock);
+
       c->proc = p;
       switchuvm(p);
       p->state = RUNNING;
 
       swtch(&(c->scheduler), p->context);
+      
       switchkvm();
+
+      // acquire(&tickslock);
+      myticksfinal = ticks;
+      // release(&tickslock);
+
+      if(myticksfinal - myticksinit > 0){
+      	p->prio = p->prio + 0;
+      	if(p->prio > 10) p->prio = 10;
+      }
+      else{
+        p->prio = p->prio - 0;
+        if(p->prio < 0) p->prio = 0;  
+      }
+
+      // cprintf("%d ran for %d\n", p->pid, myticksfinal - myticksinit);
 
       // Process is done running for now.
       // It should have changed its p->state before coming back.
@@ -573,8 +593,9 @@ int
 SET_prio(int pr)
 {
   acquire(&ptable.lock);
-  myproc()->prio = pr;
-  myproc()->state = RUNNABLE;
+  struct proc* myp = myproc();
+  myp->prio = pr;
+  myp->state = RUNNABLE;
   sched();
   release(&ptable.lock);
   return 0;
